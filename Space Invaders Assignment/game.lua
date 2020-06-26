@@ -1,37 +1,53 @@
 local composer = require( "composer" )
 local scene = composer.newScene()
-local physics = require("physics")
 display.setStatusBar( display.HiddenStatusBar )
 
 
 
 -- Defining Variables
-numberOfHomers = 5
-rowsOfHomers = 1
-numberOfFlanders = 3
-rowsOfFlanders = 1
-numberOfBarts = 1
-rowsOfBarts = 1
-homersSpeed = 46.8
-movingSpeed = 1000
-invaderBulletSpeed = 10
-gameEnded = false
-invadersStopped = false
-stopUsed = false
-lives = 3
-score = 0
-bulletSpeed = 26
-roundNumber = 0
-alienPasses = 0
-walkingSpeed = 8
-alienMoving = "no"
-dieing = "no"
-bulletOn = "no"
-invBulletOn = "no"
-updated = "yes"
-movingBullets = "off"
+local function defineVariables()
+  audio.setVolume( 0.75, { channel=2 } )
+  numberOfHomers = 5
+  rowsOfHomers = 1
+  numberOfFlanders = 3
+  rowsOfFlanders = 1
+  numberOfBarts = 1
+  rowsOfBarts = 1
+  homersSpeed = 46.8
+  movingSpeed = 1000
+  invaderBulletSpeed = 10
+  gameEnded = false
+  invadersStopped = false
+  stopUsed = false
+  lives = 3
+  score = 0
+  bulletSpeed = 26
+  roundNumber = 0
+  alienPasses = 0
+  walkingSpeed = 8
+  alienMoving = "no"
+  dieing = "no"
+  bulletOn = "yes"
+  invBulletOn = "no"
+  updated = "yes"
+  movingBullets = "off"
+  hitSound = "on"
+  shotSound = "on"
+  local scoreText
+end
 
-local pew = audio.loadSound( "pew.m4a" )
+local shootAudio =
+{
+  channel = 2
+}
+
+local hitAudio =
+{
+  channel = 3
+}
+
+local pew = audio.loadSound( "_resources/pew.m4a" )
+local rekt = audio.loadSound( "_resources/death.m4a")
 local homerTable = {}
 local alien
 
@@ -237,6 +253,12 @@ local sheetOptions =
       y = 220,
       width = 169,
       height = 169,
+    },
+    { -- 34) Info Screen
+      x = 806,
+      y = 223,
+      width = 463,
+      height = 617,
     }
   },
 }
@@ -249,34 +271,18 @@ local rightSequenceData = {
   { name = "rightWalk", frames = {23,24,25,24}, time = 1000, loopCount = 0}
 }
 
-local spriteSheet = graphics.newImageSheet( "spriteSheet.png", sheetOptions )
-
-local leftWalk = display.newSprite( spriteSheet, leftSequenceData, 1000, 1000 )
-leftWalk.x = display.contentWidth/2
-leftWalk.y = 1665
-leftWalk:scale( 1.7, 1.7 )
-leftWalk.isVisible = false
-
-local leftStand = display.newImageRect( spriteSheet, 21, 119*1.7, 191*1.7)
-leftStand.x = display.contentWidth/2
-leftStand.y = 1665
-leftStand.alpha = 0
-
-local rightWalk = display.newSprite( spriteSheet, rightSequenceData, 1000, 1000 )
-rightWalk.x = display.contentWidth/2
-rightWalk.y = 1665
-rightWalk:scale( 1.7, 1.7 )
-rightWalk.isVisible = false
-
-local rightStand = display.newImageRect( spriteSheet, 22, 119*1.7, 191*1.7)
-rightStand.x = display.contentWidth/2
-rightStand.y = 1665
-rightStand.alpha = 1
+local spriteSheet = graphics.newImageSheet( "_resources/spriteSheet.png", sheetOptions )
 
 local function endGame()
   gameEnded = true
   composer.setVariable( "finalScore", score )
   composer.gotoScene( "highscores", { time=800, effect="crossFade" } )
+  for i=1, #homerTable do
+    display.remove(homerTable[i])
+  end
+  if invaderBullet then
+    display.remove(invaderBullet)
+  end
 end
 
 local function wiggumAlphaOff()
@@ -389,7 +395,7 @@ local function newRound()
 end
 
 local function moveInvaders()
-  if invadersStopped == false then
+  if invadersStopped == false and gameEnded == false then
     numba = #homerTable
     if changeDirection == true then
       homersSpeed = homersSpeed *-1
@@ -439,7 +445,7 @@ local function moveAlien()
       alienMoving = "no"
     end
     if alienMoving == "yes" then
-      alien.x = alien.x - 5
+      alien.x = alien.x - 10
       timer.performWithDelay(10, moveAlien)
     end
   end
@@ -449,7 +455,7 @@ local function sane()
   walkingSpeed = 8
   bulletSpeed = 26
 end
-local function superSane()
+local function superSaiyan()
   if lives > 3 then
     walkingSpeed = 32
     lives = 3
@@ -468,63 +474,70 @@ local function alienPass()
 end
 
 local function checkCollision()
-  for i=1, #homerTable do
+  if gameEnded == false then
     if bulletOn == "yes" then
-      if bullet.x - 14.5 < homerTable[i].x + 64.5 and bullet.x + 14.5 > homerTable[i].x - 64.5 and bullet.y - 45 < homerTable[i].y + 81.5 and bullet.y + 45 > homerTable[i].y - 81.5  then
-        Runtime:removeEventListener("enterFrame", checkCollision)
-        updated = "no"
-        display.remove(homerTable[i])
-        table.remove(homerTable, i)
-        display.remove(bullet)
-        score = score + 50
-        display.remove(scoreText)
-        scoreText = display.newText(score, display.contentWidth/2, 1963, "ARCADE.TTF", 200)
-        bulletOn = "no"
-        for i=1,10 do
-          if score/i == 1000 then
-            alienPass()
+      for i=1, #homerTable do
+        if bulletOn == "yes" then
+          if bullet.x - 14.5 < homerTable[i].x + 64.5 and bullet.x + 14.5 > homerTable[i].x - 64.5 and bullet.y - 45 < homerTable[i].y + 81.5 and bullet.y + 45 > homerTable[i].y - 81.5  then
+            Runtime:removeEventListener("enterFrame", checkCollision)
+            audio.play(rekt, hitAudio)
+            updated = "no"
+            display.remove(homerTable[i])
+            table.remove(homerTable, i)
+            display.remove(bullet)
+            score = score + 50
+            display.remove(scoreText)
+            scoreText = display.newText(score, display.contentWidth/2, 1963, "_resources/ARCADE.TTF", 200)
+            bulletOn = "no"
+            for i=1,100 do
+              if score/i == 1000 then
+                alienPass()
+              end
+            end
           end
         end
       end
     end
-  end
-  if alienMoving == "yes" and bulletOn == "yes" then
-    if alien.x - 85 < bullet.x + 14.5 and alien.x + 85 > bullet.x - 14.5 and bullet.y < 205 then
-      display.remove(alien)
-      display.remove(bullet)
-      bulletOn = "no"
-      alienMoving = "no"
-      lives = lives + 1
+    if alienMoving == "yes" and bulletOn == "yes" then
+      if alien.x - 85 < bullet.x + 14.5 and alien.x + 85 > bullet.x - 14.5 and bullet.y < 205 then
+        display.remove(alien)
+        display.remove(bullet)
+        bulletOn = "no"
+        alienMoving = "no"
+        lives = lives + 1
+      end
     end
-  end
-  if #homerTable == 0 then
-    newRound()
+    if #homerTable == 0 then
+      newRound()
+    end
   end
 end
 
 local function checkInvaderPos()
-  numbor = #homerTable
-  for i=1, numbor do
-    if homerTable[i].y > 1746.5 then
-      lives = 0
-    end
-  end
-end
-
-local function moveBullet()
   if gameEnded == false then
-    if bulletOn == "yes" then
-      if bullet.y > 0 then
-        bullet.y = bullet.y - bulletSpeed
-        timer.performWithDelay( 1, moveBullet )
-      else
-        display.remove(bullet)
-        bulletOn = "no"
-        Runtime:removeEventListener("enterFrame", checkCollision)
+    numbor = #homerTable
+    for i=1, numbor do
+      if homerTable[i].y > 1746.5 then
+        lives = 0
       end
     end
   end
 end
+
+  local function moveBullet()
+    if gameEnded == false then
+      if bulletOn == "yes" then
+        if bullet.y > 0 then
+          bullet.y = bullet.y - bulletSpeed
+          timer.performWithDelay( 1, moveBullet )
+        else
+          display.remove(bullet)
+          bulletOn = "no"
+          Runtime:removeEventListener("enterFrame", checkCollision)
+        end
+      end
+    end
+  end
 
 local function removeInvaderBullet(i)
   display.remove(invaderBullet)
@@ -574,10 +587,9 @@ local function wiggumShoot()
     bullet = display.newImageRect( spriteSheet, 28, 26, 90)
     bullet.x = leftWalk.x
     bullet.y = 1460
-    audio.play(laserSound)
     Runtime:addEventListener("enterFrame", checkCollision)
     bulletOn = "yes"
-    audio.play( pew )
+    audio.play(pew, shootAudio)
     moveBullet()
   end
 end
@@ -665,6 +677,7 @@ end
 local function continueInvaders()
   invadersStopped = false
   moveInvaders()
+  invaderShoot()
   if alienMoving == "yes" then
     moveAlien()
   end
@@ -675,6 +688,30 @@ local function stopInvaders()
   stopUsed = true
   display.remove(stopInvadersButton)
   timer.performWithDelay( 5000, continueInvaders )
+end
+
+local function muteShots()
+  if shotSound == "on" then
+    audio.setVolume( 0, { channel=2 } )
+    shotSound = "off"
+  else
+    audio.setVolume( 0.75, { channel=2 } )
+    shotSound = "on"
+  end
+end
+
+local function muteHits()
+  if hitSound == "on" then
+    audio.setVolume( 0, { channel=3 } )
+    hitSound = "off"
+  else
+    audio.setVolume( 1, { channel=3 } )
+    hitSound = "on"
+  end
+end
+
+local function canShoot()
+  bulletOn = "no"
 end
 
 local function keyPressed(event)
@@ -701,10 +738,16 @@ local function keyPressed(event)
       wiggumShoot()
     end
     if event.keyName == "e" and event.phase == "down" then
-      superSane()
+      superSaiyan()
     end
     if event.keyName == "s" and event.phase == "down" and stopUsed == false then
       stopInvaders()
+    end
+    if event.keyName == "k" and event.phase == "down" then
+      muteHits()
+    end
+    if event.keyName == "l" and event.phase == "down" then
+      muteShots()
     end
     return false
 end
@@ -714,8 +757,12 @@ function scene:create( event )
 
     local sceneGroup = self.view
 
+    composer.removeScene("restart-level")
+
+    defineVariables()
     createInvader()
     timer.performWithDelay( 5000, invaderShoot )
+    timer.performWithDelay( 3000, canShoot )
 
     background = display.newImageRect( spriteSheet, 14, display.contentWidth, display.contentHeight )
     background.x = display.contentCenterX
@@ -770,28 +817,44 @@ function scene:create( event )
     platform.y = 1938
     sceneGroup:insert(platform)
 
-    scoreText = display.newText(score, display.contentWidth/2, 1963, "ARCADE.TTF", 200)
+    scoreText = display.newText(score, display.contentWidth/2, 1963, "_resources/ARCADE.TTF", 200)
     sceneGroup:insert(scoreText)
     pauseButton:addEventListener("tap", musicPausePressed)
     musicButton:addEventListener("tap", musicPlayPressed)
     Runtime:addEventListener("key", keyPressed)
+
+    leftWalk = display.newSprite( spriteSheet, leftSequenceData, 1000, 1000 )
+    leftWalk.x = display.contentWidth/2
+    leftWalk.y = 1665
+    leftWalk:scale( 1.7, 1.7 )
+    leftWalk.isVisible = false
+
+    leftStand = display.newImageRect( spriteSheet, 21, 119*1.7, 191*1.7)
+    leftStand.x = display.contentWidth/2
+    leftStand.y = 1665
+    leftStand.alpha = 0
+
+    rightWalk = display.newSprite( spriteSheet, rightSequenceData, 1000, 1000 )
+    rightWalk.x = display.contentWidth/2
+    rightWalk.y = 1665
+    rightWalk:scale( 1.7, 1.7 )
+    rightWalk.isVisible = false
+
+    rightStand = display.newImageRect( spriteSheet, 22, 119*1.7, 191*1.7)
+    rightStand.x = display.contentWidth/2
+    rightStand.y = 1665
+    rightStand.alpha = 1
 
     sceneGroup:insert(leftWalk)
     sceneGroup:insert(rightWalk)
     sceneGroup:insert(leftStand)
     sceneGroup:insert(rightStand)
 
-    local function putInScene()
-      for i=1, #homerTable do
-        sceneGroup:insert(homerTable[i])
-      end
-      Runtime:removeEventListener("enterFrame", putInScene)
-    end
-
     Runtime:addEventListener("enterFrame", checkLives)
-    Runtime:addEventListener("enterFrame", putInScene)
     Runtime:addEventListener("enterFrame", checkInvaderPos)
     stopInvadersButton:addEventListener("touch", stopInvaders)
+    timer.performWithDelay( 2000, moveInvaders)
+
     -- Code here runs when the scene is first created but has not yet appeared on screen
 
 end
@@ -805,7 +868,7 @@ function scene:show( event )
 
     if ( phase == "will" ) then
         -- Code here runs when the scene is still off screen (but is about to come on screen)
-        timer.performWithDelay( 1000, moveInvaders())
+
     elseif ( phase == "did" ) then
         -- Code here runs when the scene is entirely on screen
 
@@ -824,11 +887,13 @@ function scene:hide( event )
 
     elseif ( phase == "did" ) then
         -- Code here runs immediately after the scene goes entirely off screen
+        if bullet then
+          display.remove(bullet)
+        end
+        display.remove(scoreText)
         Runtime:removeEventListener( "key", keyPressed )
         Runtime:removeEventListener("enterFrame", checkLives)
-        Runtime:removeEventListener("enterFrame", putInScene)
         Runtime:removeEventListener("enterFrame", checkInvaderPos)
-        composer.removeScene("menu-screen")
     end
 end
 

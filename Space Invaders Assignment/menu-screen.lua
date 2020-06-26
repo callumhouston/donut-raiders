@@ -46,7 +46,7 @@ local function highscoresButtonPPress()
 end
 
 local function playButtonGPress()
-  composer.gotoScene("game",{effect = "fade", time = 3000})
+  composer.gotoScene("restart-level")
 end
 
 local function quitButtonGPress()
@@ -57,10 +57,11 @@ local function quitButtonGPress()
 end
 
 local function highscoresButtonGPress()
-  composer.gotoScene("highscores",{effect = "fade", time = 3000})
+  composer.gotoScene("highscores",{effect = "crossFade", time = 1000})
 end
 
 local function helpButtonGPress()
+  composer.gotoScene("help",{effect = "crossFade", time = 1000})
 end
 
 local function enterPressed()
@@ -72,6 +73,9 @@ local function enterPressed()
   end
   if buttonOn == "highscores" then
     highscoresButtonGPress()
+  end
+  if buttonOn == "help" then
+    helpButtonGPress()
   end
 end
 
@@ -208,11 +212,113 @@ local sheetOptions =
       y = 736,
       width = 91,
       height = 91,
+    },
+    { -- 18) Wiggum Left-Walk 1
+      x = 434,
+      y = 0,
+      width = 119,
+      height = 191,
+    },
+    { -- 19 Wiggum Left-Walk 2
+      x = 555,
+      y = 0,
+      width = 119,
+      height = 191,
+    },
+    { -- 20) Wiggum Left-Walk 3
+      x = 676,
+      y = 0,
+      width = 119,
+      height = 191,
+    },
+    { -- 21) Wiggum Left-Stand
+      x = 797,
+      y = 0,
+      width = 119,
+      height = 191,
+    },
+    { -- 22) Wiggum Right-Stand
+      x = 919,
+      y = 0,
+      width = 119,
+      height = 191,
+    },
+    { -- 23) Wiggum Right-Walk 1
+      x = 1040,
+      y = 0,
+      width = 119,
+      height = 191,
+    },
+    { -- 24) Wiggum Right-Walk 2
+      x = 1161,
+      y = 0,
+      width = 119,
+      height = 191,
+    },
+    { -- 25) Wiggum Right-Walk 3
+      x = 1283,
+      y = 0,
+      width = 119,
+      height = 191,
+    },
+    { -- 26) Golden Donut
+      x = 340,
+      y = 629,
+      width = 216,
+      height = 220,
+    },
+    { -- 27) Mini Homer Bullet
+      x = 1423,
+      y = 24,
+      width = 67,
+      height = 157,
+    },
+    { -- 28) Red Laser Bullet
+      x = 1505,
+      y = 33,
+      width = 39,
+      height = 142,
+    },
+    { -- 29) Big Homie
+      x = 1569,
+      y = 21,
+      width = 129,
+      height = 163,
+    },
+    { -- 30) Flanders
+      x = 1699,
+      y = 18,
+      width = 136,
+      height = 168,
+    },
+    { -- 31) Alien Boy
+      x = 1850,
+      y = 23,
+      width = 131,
+      height = 160,
+    },
+    { -- 32) Bart
+      x = 414,
+      y = 209,
+      width = 138,
+      height = 197,
+    },
+    { -- 33) Stop sign
+      x = 574,
+      y = 220,
+      width = 169,
+      height = 169,
+    },
+    { -- 34) Info Screen
+      x = 806,
+      y = 223,
+      width = 463,
+      height = 617,
     }
   },
 }
 
-local spriteSheet = graphics.newImageSheet( "spriteSheet.png", sheetOptions )
+local spriteSheet = graphics.newImageSheet( "_resources/spriteSheet.png", sheetOptions )
 
 local function MusicPausePressed()
   audio.resume(loop)
@@ -250,13 +356,11 @@ local function keyPressed(event)
     return false
 end
 
-Runtime:addEventListener( "key", keyPressed )
 
 -- create()
 function scene:create( event )
 
     local sceneGroup = self.view
-
 
     local background = display.newImageRect( spriteSheet, 14, display.contentWidth, display.contentHeight )
     background.x = display.contentCenterX
@@ -343,6 +447,7 @@ function scene:create( event )
     quitButtonG.alpha = 0
     sceneGroup:insert(quitButtonG)
 
+    Runtime:addEventListener( "key", keyPressed )
     playButtonP:addEventListener("tap", playButtonPPress)
     helpButtonP:addEventListener("tap", helpButtonPPress)
     highscoresButtonP:addEventListener("tap", highscoresButtonPPress)
@@ -368,6 +473,7 @@ function scene:show( event )
 
     elseif ( phase == "did" ) then
         -- Code here runs when the scene is entirely on screen
+        composer.removeScene("highscores")
 
     end
 end

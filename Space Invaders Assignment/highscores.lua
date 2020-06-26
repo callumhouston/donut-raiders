@@ -203,11 +203,24 @@ local sheetOptions =
       y = 209,
       width = 138,
       height = 197,
+    },
+    { -- 33) Stop sign
+      x = 574,
+      y = 220,
+      width = 169,
+      height = 169,
+    },
+    { -- 34) Info Screen
+      x = 806,
+      y = 223,
+      width = 463,
+      height = 617,
     }
   },
 }
 
-local spriteSheet = graphics.newImageSheet( "spriteSheet.png", sheetOptions )
+-- defining sprite sheet
+local spriteSheet = graphics.newImageSheet( "_resources/spriteSheet.png", sheetOptions )
 
 -- Loads the json library resource. This is a function built into Corona SDK and it is pretty much used to sort data efficiently and easily
 local json = require( "json" )
@@ -259,13 +272,20 @@ function scene:create( event )
     local sceneGroup = self.view
     -- Code here runs when the scene is first created but has not yet appeared on screen
 
+    local function goToMenu()
+      composer.gotoScene("menu-screen",{effect = "crossFade", time = 1000})
+    end
     -- load scores function
     loadScores()
 
     -- set background
-    local background = display.newImageRect( spriteSheet, 14, display.contentWidth, display.contentHeight)
+    local background = display.newImageRect( sceneGroup, spriteSheet, 14, display.contentWidth, display.contentHeight)
     background.x = display.contentCenterX
     background.y = display.contentCenterY
+
+    local text = display.newText( sceneGroup, "MENU", display.contentCenterX, 1950, "_resources/ARCADE.TTF", 200 )
+    text:setFillColor( 0.75, 0.78, 1 )
+    text:addEventListener("tap", goToMenu)
 
     -- places score fron gane into scores table (only if highscore is accessed after death, not from menu)
     table.insert( scoresTable, composer.getVariable( "finalScore" ) )
@@ -280,32 +300,45 @@ function scene:create( event )
     table.sort( scoresTable, compare )
 
     -- displaying text
-    local highScoresHeader = display.newText("High Scores", display.contentCenterX, 250, "ARCADE.TTF", 200 )
+    local highScoresHeader = display.newText(sceneGroup, "High Scores", display.contentCenterX, 250, "_resources/ARCADE.TTF", 200 )
 
     -- saves new scores
     saveScores()
 
     -- This function places the numbers from 1-10 down the screen as well as the highscores in order next to them
     local function displayScores(i)
-      local rankNum = display.newText( i .. ")", display.contentCenterX-50, yPos, "ARCADE.TTF", 150 )
+      local rankNum = display.newText(sceneGroup, i .. ")", display.contentCenterX-50, yPos, "_resources/ARCADE.TTF", 150 )
       rankNum:setFillColor( 0.8 )
       rankNum.anchorX = 1
 
-      local thisScore = display.newText( scoresTable[i], display.contentCenterX-30, yPos, "ARCADE.TTF", 150 )
+      local thisScore = display.newText(sceneGroup, scoresTable[i], display.contentCenterX-30, yPos, "_resources/ARCADE.TTF", 150 )
       thisScore.anchorX = 0
     end
+
+    -- This function displays the highscores with their number order next to them
     for i = 1, 10 do
         if ( scoresTable[i] ) then
             local yPos = 250 + ( i * 150 )
 
-            local rankNum = display.newText( i .. ")", display.contentCenterX-50, yPos, "ARCADE.TTF", 150 )
+            local rankNum = display.newText( sceneGroup, i .. ")", display.contentCenterX-50, yPos, "_resources/ARCADE.TTF", 150 )
             rankNum:setFillColor( 0.8 )
             rankNum.anchorX = 1
 
-            local thisScore = display.newText( scoresTable[i], display.contentCenterX-30, yPos, "ARCADE.TTF", 150 )
+            local thisScore = display.newText( sceneGroup, scoresTable[i], display.contentCenterX-30, yPos, "_resources/ARCADE.TTF", 150 )
             thisScore.anchorX = 0
         end
     end
+
+    local escText = display.newText( sceneGroup, "(esc)", 1100, 1910, system.nativeFont, 100)
+    escText:setFillColor( 1, 0.78, 0.75 )
+
+    local function keyPressed(event)
+        if event.keyName == "escape" and event.phase == "down" then
+          goToMenu()
+        end
+    end
+
+    Runtime:addEventListener( "key", keyPressed )
 
 end
 
@@ -322,6 +355,7 @@ function scene:show( event )
 
     elseif ( phase == "did" ) then
         -- Code here runs when the scene is entirely on screen
+        Runtime:removeEventListener( "key", keyPressed )
 
     end
 end

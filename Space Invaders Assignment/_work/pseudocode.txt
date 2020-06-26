@@ -1,0 +1,8 @@
+-- This pseudocode document features all of the key functions from my game written in pseudocode
+
+Move Player Left function
+  if leftArrowKey == "down" and player.x > 0 then
+    player.x = player.x - movingSpeed
+    timer.performWithDelay( 1, walkingLeft )
+  end
+end
