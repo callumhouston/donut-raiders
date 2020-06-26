@@ -1,0 +1,68 @@
+-- This pseudocode document features all of the key functions from my game written in pseudocode
+
+Move Player Left function
+  if leftArrowKey is down and player is on screen then
+    player.x = player.x - amount
+    repeat Move Player Left Function with x delay
+  end
+end
+
+Move Player Right function
+  if rightArrowKey is down and player is on screen then
+    player.x = player.x - amount
+    repeat Move Player Right Function with x delay
+  end
+end
+
+Move Bullet function
+  if bullet is on screen then
+    bullet.y = bullet.y - amount
+    repeat Move Bullet funciton with x delay
+  end
+end
+
+Player Shoot function
+  if there is no bullets on screen then
+    shoot bullet from player position
+    activate move bullet function
+  end
+end
+
+Move Invaders function
+  If changeDirection == on then
+    invaders.y = invaders.y + amount
+    change directions
+    changeDirection = off
+  else
+    if invaders are not touching edge
+      invaders.x = invaders.x + amount
+    else
+      changeDirection = on
+    end
+  end
+  repeat Move Invaders function with x delay
+end
+
+Move Invaders Bullet function
+  if invaderBullet is touching player then
+    killPlayer function
+    remove bullet
+  end
+  if invaderBullet on screen and in valid area then
+    invadersBullet.y = invaderBullet.y + amount
+  else
+    remove bullet
+  end
+  repeat Move Invaders Bullet function with x delay
+end
+
+Invaders Shoot function
+  if there is no bullet on screen
+    choose random number from amount of objects in invader table
+    if invaderTable[randomNumber] exists then
+      shoot Bullet from said invader position
+      bullet shot = yes
+    end
+  end
+  repeat Invaders Shoot function with x delay
+end
